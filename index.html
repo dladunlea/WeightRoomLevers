@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weight Room Levers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a lab-bench workspace. Exercise picker on top, the stick figure and its lever diagram side by side on graph paper, the numbers underneath. Force colors match the class sample slides. */
+:root {
+  --paper: #eef3f2;
+  --surface: #ffffff;
+  --ink: #1b2a2d;
+  --muted: #586a6d;
+  --line: #d3dfdd;
+  --grid: #e6eeec;
+  --accent: #2f6f78;
+  --accent-soft: #ddeeee;
+  --on-accent: #ffffff;
+  --muscle: #c0392b;
+  --added: #1f5fa8;
+  --seg: #2b8a52;
+  --joint: #687477;
+  --beam: #8a6d4b;
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e1618; --surface: #152023; --ink: #e2ecea; --muted: #98acae; --line: #29393c; --grid: #1c2a2d;
+    --accent: #74c4cb; --accent-soft: #1d3538; --on-accent: #0e1618;
+    --muscle: #ff7b6c; --added: #78aefe; --seg: #5ccf8c; --joint: #a6b4b6; --beam: #caa67b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e1618; --surface: #152023; --ink: #e2ecea; --muted: #98acae; --line: #29393c; --grid: #1c2a2d;
+  --accent: #74c4cb; --accent-soft: #1d3538; --on-accent: #0e1618;
+  --muscle: #ff7b6c; --added: #78aefe; --seg: #5ccf8c; --joint: #a6b4b6; --beam: #caa67b;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+.wrap {
+  max-width: 1200px; margin: 0 auto; display: grid; gap: 12px;
+  padding-block: 14px 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.7rem, 3.4vw, 2.3rem); line-height: 1.05; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+.lede { margin: 4px 0 0; color: var(--muted); max-width: 62ch; font-size: 0.95rem; }
+.formula { font-family: var(--f-mono); font-size: 0.9rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; white-space: nowrap; }
+.formula b { color: var(--accent); }
+
+.app { display: grid; grid-template-columns: minmax(180px, 220px) minmax(0, 1fr); gap: 14px; align-items: start; }
+.main { display: grid; gap: 12px; min-width: 0; }
+.picker { display: grid; gap: 14px; position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); }
+.group { display: grid; gap: 6px; }
+.glabel { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); min-width: 0; }
+.chip {
+  font: 700 0.92rem/1.2 var(--f-body); color: var(--ink); background: var(--surface);
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 0.5rem 0.8rem; min-height: 44px; width: 100%; text-align: left; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+.chip:hover { border-color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 1000px) { .stage { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); } .app { grid-template-columns: minmax(150px, 180px) minmax(0, 1fr); } }
+/* iPad landscape and other short screens: keep the picker, slider and both diagrams on one screen */
+@media (min-width: 701px) and (max-height: 920px) {
+  .lede { display: none; }
+  h1 { font-size: 1.6rem; }
+  .chip { min-height: 40px; padding: 0.35rem 0.75rem; }
+  .picker { gap: 10px; }
+  .panel-head { padding: 8px 14px; }
+  .legend { padding: 7px 14px; font-size: 0.8rem; }
+}
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; padding: 11px 16px; border-bottom: 1px solid var(--line); }
+.eyebrow { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.pname { font-family: var(--f-display); font-weight: 600; font-size: 1.12rem; }
+.badge { font: 700 0.8rem var(--f-mono); color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 3px 8px; }
+.paper {
+  flex: 1; display: flex; align-items: center; justify-content: center; padding: 6px;
+  background-color: var(--surface);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.paper svg { width: 100%; height: auto; display: block; max-height: min(700px, calc(100vh - 320px)); max-height: min(700px, calc(100dvh - 320px)); min-height: 260px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 16px; border-top: 1px solid var(--line); font-size: 0.84rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 18px; height: 4px; border-radius: 2px; display: inline-block; }
+.sw.m { background: var(--muscle); } .sw.s { background: var(--seg); } .sw.a { background: var(--added); }
+.sw.j { background: repeating-linear-gradient(90deg, var(--joint) 0 4px, transparent 4px 7px); }
+.tri { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 11px solid var(--ink); display: inline-block; }
+.note { width: 100%; font-style: italic; }
+
+.controls {
+  display: grid; grid-template-columns: minmax(0, 1fr); align-items: end; gap: 14px 18px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 14px;
+}
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label, .field .lab { font-size: 0.78rem; font-weight: 700; color: var(--muted); letter-spacing: 0.02em; }
+.angle-row { display: flex; align-items: center; gap: 12px; }
+.angle-row input { flex: 1; min-width: 0; height: 44px; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; touch-action: none; }
+.angle-row input::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: var(--line); }
+.angle-row input::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; margin-top: -12px; border-radius: 50%; background: var(--accent); border: 4px solid var(--surface); box-shadow: 0 0 0 1.5px var(--accent); }
+.angle-row input::-moz-range-track { height: 8px; border-radius: 4px; background: var(--line); }
+.angle-row input::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); border: 4px solid var(--surface); box-shadow: 0 0 0 1.5px var(--accent); }
+.step { width: 44px; height: 44px; flex: none; border-radius: 10px; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); font: 700 1.3rem/1 var(--f-mono); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.step:active { background: var(--accent-soft); }
+.deg { font: 700 1.05rem var(--f-mono); min-width: 4.2ch; text-align: right; font-variant-numeric: tabular-nums; }
+input[type="number"], select {
+  font: 500 1rem var(--f-mono); color: var(--ink); background: var(--paper); border: 1.5px solid var(--line); border-radius: 8px;
+  padding: 6px 8px; width: 100%; min-width: 0;
+}
+.toggle {
+  font: 700 0.95rem var(--f-body); border-radius: 10px; padding: 9px 14px; cursor: pointer; white-space: nowrap;
+  border: 1.5px solid var(--muscle); color: var(--muscle); background: transparent;
+}
+.toggle[aria-pressed="true"] { background: var(--muscle); color: var(--surface); }
+
+.details { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.card h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.12rem; margin: 0 0 10px; }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; }
+dt { font-size: 0.8rem; font-weight: 700; color: var(--muted); padding-top: 2px; }
+dd { margin: 0; }
+.tip { margin: 12px 0 0; padding-top: 12px; border-top: 1px dashed var(--line); color: var(--muted); }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 0.76rem; font-weight: 700; color: var(--muted); }
+td.n { font-family: var(--f-mono); text-align: right; }
+th.n { text-align: right; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; }
+.caption { font-size: 0.86rem; color: var(--muted); margin: 10px 0 0; }
+
+.answers { grid-column: 1 / -1; }
+.ans-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 28px; }
+.ans-grid h3 { margin: 0 0 6px; font-size: 0.95rem; color: var(--accent); }
+.eq { font-family: var(--f-mono); font-size: 0.9rem; margin: 0; display: grid; gap: 4px; }
+.eq div { overflow-wrap: anywhere; }
+.eq .res { color: var(--muscle); font-weight: 700; }
+.circle { border: 2.5px solid var(--muscle); border-radius: 999px; padding: 1px 10px; color: var(--muscle); font-weight: 700; display: inline-block; }
+.hidden-msg { color: var(--muted); margin: 0; }
+.ratio { margin: 14px 0 0; padding-top: 12px; border-top: 1px dashed var(--line); }
+
+/* SVG drawing */
+.bd { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; fill: none; }
+.bd.back { opacity: 0.35; }
+.mv { stroke: var(--accent); stroke-width: 6; stroke-linecap: round; fill: none; }
+.ms { stroke: var(--muscle); stroke-width: 3; stroke-linecap: round; fill: none; opacity: 0.85; }
+.hd { fill: var(--surface); stroke: var(--ink); stroke-width: 3.5; }
+.pv { fill: var(--surface); stroke: var(--accent); stroke-width: 3; }
+.com { fill: var(--seg); }
+.comx { stroke: var(--surface); stroke-width: 1.5; }
+.wt { fill: var(--added); }
+.wtbar { stroke: var(--added); stroke-width: 3; stroke-linecap: round; }
+.mach { fill: var(--line); stroke: var(--muted); stroke-width: 1.5; }
+.gnd { stroke: var(--muted); stroke-width: 2; }
+.gnd.thin { stroke-width: 1; }
+.beam { stroke: var(--beam); stroke-width: 9; stroke-linecap: round; }
+.ref { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
+.fulcrum { fill: var(--ink); }
+.ar-m { stroke: var(--muscle); fill: var(--muscle); }
+.ar-s { stroke: var(--seg); fill: var(--seg); }
+.ar-a { stroke: var(--added); fill: var(--added); }
+.ar-j { stroke: var(--joint); fill: var(--joint); }
+.shaft { stroke-width: 3.5; fill: none; }
+.ar-j .shaft { stroke-dasharray: 6 4; }
+.head { stroke: none; }
+.lbl { font-family: var(--f-body); font-size: 15px; font-weight: 700; }
+.val { font-family: var(--f-mono); font-size: 12.5px; font-weight: 700; }
+.t-m { fill: var(--muscle); } .t-s { fill: var(--seg); } .t-a { fill: var(--added); } .t-j { fill: var(--joint); } .t-ink { fill: var(--ink); } .t-mut { fill: var(--muted); }
+.dim { stroke: var(--ink); stroke-width: 1.2; }
+.leader { stroke: var(--muscle); stroke-width: 1.2; stroke-dasharray: 2 3; fill: none; }
+.dimtxt { font-family: var(--f-mono); font-size: 13.5px; font-weight: 500; }
+
+@media (max-width: 700px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .picker { position: static; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+  .group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .chip { width: auto; border-radius: 999px; }
+  .paper svg { max-height: none; }
+  .stage, .details, .ans-grid { grid-template-columns: minmax(0, 1fr); }
+  .controls .angle-field { grid-column: 1 / -1; }
+  .controls .toggle { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* One-screen layout. Landscape: figure + About stacked beside a full-height lever diagram.
+   Portrait: figure + About side by side above a full-width lever diagram. */
+@media (min-width: 701px) {
+  .lede { display: none; }
+  .stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "fig lever" "about lever"; grid-template-rows: auto minmax(0, 1fr); align-items: start; }
+  .fig-panel { grid-area: fig; }
+  .lever-panel { grid-area: lever; align-self: stretch; }
+  .about { grid-area: about; align-self: stretch; padding: 12px 14px; }
+  .about h2 { font-size: 1rem; margin: 0 0 8px; }
+  .facts { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 5px 12px; font-size: 0.92rem; }
+  .facts dd.wide { grid-column: span 3; }
+  .about .tip { margin: 10px 0 0; padding-top: 8px; font-size: 0.9rem; }
+  #figure { max-height: calc(100vh - 570px); max-height: calc(100dvh - 570px); min-height: 200px; }
+  #lever { max-height: calc(100vh - 350px); max-height: calc(100dvh - 350px); min-height: 300px; }
+}
+
+/* Fill exactly one screen on tablets and laptops: the diagrams take whatever height is left. */
+@media (min-width: 701px) {
+  html, body { height: 100%; }
+  .wrap { height: 100vh; height: 100dvh; grid-template-rows: auto minmax(0, 1fr); }
+  .app { min-height: 0; height: 100%; align-items: stretch; }
+  .picker { position: static; overflow-y: auto; max-height: 100%; align-content: start; padding-right: 2px; }
+  .main { min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
+  .stage { min-height: 0; grid-template-rows: minmax(330px, 1fr) minmax(0, max-content); align-items: stretch; }
+  .fig-panel, .lever-panel { min-height: 0; }
+  .paper { position: relative; min-height: 0; }
+  #figure, #lever { position: absolute; inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); max-height: none; min-height: 0; }
+  .about { overflow-y: auto; min-height: 0; }
+}
+@media (min-width: 701px) and (max-width: 1000px) {
+  .stage { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+  .facts { grid-template-columns: auto minmax(0, 1fr); }
+  .facts dd.wide { grid-column: auto; }
+}
+</style>
+<style>[hidden]{display:none!important} img{max-width:100%} body{margin:0}</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Weight Room Levers</h1>
+      <p class="lede">Pick an exercise and drag the angle. Watch how the lever and the horizontal distances change as the limb moves.</p>
+    </div>
+    <div class="formula">torque = force &times; <b>horizontal</b> distance</div>
+  </header>
+
+  <div class="app">
+  <nav class="picker" id="picker" aria-label="Choose an exercise"></nav>
+  <div class="main">
+  <section class="controls" aria-label="Settings">
+    <div class="field angle-field">
+      <label for="angle" id="angleLabel">Forearm angle from horizontal</label>
+      <div class="angle-row"><button type="button" class="step" id="angleDown" aria-label="Lower the angle by 5 degrees">&minus;</button><input type="range" id="angle" min="-70" max="70" step="1" value="0"><button type="button" class="step" id="angleUp" aria-label="Raise the angle by 5 degrees">+</button><span class="deg" id="angleOut">0&deg;</span></div>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="panel fig-panel">
+      <div class="panel-head">
+        <span class="eyebrow">Exercise</span>
+        <span class="pname" id="exName">Biceps curl</span>
+      </div>
+      <div class="paper"><svg id="figure" viewBox="0 0 300 300" role="img" aria-label="Stick figure"></svg></div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--accent)"></span>Moving body segment</span>
+        <span><span class="sw m"></span>Agonist muscle</span>
+        <span><span class="dot" style="background:var(--accent);width:9px;height:9px;margin:0;border:2px solid var(--accent)"></span>Joint (pivot)</span>
+      </div>
+    </div>
+    <div class="panel lever-panel">
+      <div class="panel-head">
+        <span class="eyebrow">Lever diagram</span>
+        <span class="badge" id="classBadge">Class 3 lever</span>
+      </div>
+      <div class="paper"><svg id="lever" viewBox="0 0 400 300" role="img" aria-label="Lever diagram"></svg></div>
+      <div class="legend" id="leverLegend">
+        <span><span class="tri"></span>Fulcrum</span>
+        <span><span class="sw m"></span>Muscle (effort)</span>
+        <span><span class="sw s"></span>Body segment weight</span>
+        <span><span class="sw a"></span>Added weight</span>
+        <span><span class="sw j"></span>Joint force</span>
+      </div>
+    </div>
+    <div class="card about">
+      <h2>About this lever</h2>
+      <dl id="facts" class="facts"></dl>
+      <p class="tip" id="tip"></p>
+    </div>
+  </section>
+  </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var D2R = Math.PI / 180;
+  function P(x, y) { return { x: x, y: y }; }
+  function pol(o, len, deg) { return { x: o.x + len * Math.cos(deg * D2R), y: o.y - len * Math.sin(deg * D2R) }; }
+  function f(n) { return (Math.round(n * 10) / 10).toString(); }
+  function r1(n) { var a = Math.abs(n); return a >= 100 ? Math.round(n).toString() : (Math.round(n * 10) / 10).toString(); }
+
+  /* ---------- figure helpers ---------- */
+  function ln(a, b, c) { return '<line x1="' + f(a.x) + '" y1="' + f(a.y) + '" x2="' + f(b.x) + '" y2="' + f(b.y) + '" class="' + (c || "bd") + '"/>'; }
+  function headC(p) { return '<circle cx="' + f(p.x) + '" cy="' + f(p.y) + '" r="13" class="hd"/>'; }
+  function pivotC(p) { return '<circle cx="' + f(p.x) + '" cy="' + f(p.y) + '" r="6" class="pv"/>'; }
+  function comC(p) { return '<circle cx="' + f(p.x) + '" cy="' + f(p.y) + '" r="5.5" class="com"/><path d="M' + f(p.x - 5.5) + ' ' + f(p.y) + 'H' + f(p.x + 5.5) + 'M' + f(p.x) + ' ' + f(p.y - 5.5) + 'V' + f(p.y + 5.5) + '" class="comx"/>'; }
+  function plate(p) { return '<circle cx="' + f(p.x) + '" cy="' + f(p.y) + '" r="8" class="wt"/>'; }
+  function bar(p, deg) {
+    var a = pol(p, 11, deg), b = pol(p, -11, deg), a2 = pol(p, 8, deg), b2 = pol(p, -8, deg);
+    return '<line x1="' + f(a.x) + '" y1="' + f(a.y) + '" x2="' + f(b.x) + '" y2="' + f(b.y) + '" class="wtbar"/>' +
+      '<circle cx="' + f(a2.x) + '" cy="' + f(a2.y) + '" r="5" class="wt"/><circle cx="' + f(b2.x) + '" cy="' + f(b2.y) + '" r="5" class="wt"/>';
+  }
+  function ground() {
+    var s = '<line x1="10" y1="282" x2="290" y2="282" class="gnd"/>';
+    for (var x = 18; x < 292; x += 14) s += '<line x1="' + x + '" y1="283" x2="' + (x - 7) + '" y2="291" class="gnd thin"/>';
+    return s;
+  }
+  var ST = { hip: P(130, 164), knee: P(132, 220), ankle: P(130, 276), toe: P(149, 281), sh: P(130, 96), head: P(133, 73) };
+  function standing(noHead) {
+    var s = ST, o = "";
+    o += ln(P(127, 164), P(124, 220), "bd back") + ln(P(124, 220), P(126, 276), "bd back") + ln(P(126, 276), P(145, 281), "bd back");
+    o += ln(s.hip, s.knee) + ln(s.knee, s.ankle) + ln(s.ankle, s.toe) + ln(s.hip, s.sh);
+    if (!noHead) o += ln(s.sh, P(132, 86)) + headC(s.head);
+    return o;
+  }
+
+  /* ---------- exercises ---------- */
+  var EX = [
+    {
+      id: "curl", region: "Arms", name: "Biceps curl", joint: "Elbow", seg: "Forearm + hand", segShort: "arm", pct: 0.022, com: [18, 16],
+      added: { label: "Dumbbell (lb)", name: "Dumbbell", short: "dumbbell", def: 10, d: [33, 30] },
+      muscle: { name: "Biceps", short: "biceps", antag: "Triceps", d: [4, 3.5], side: 1, pull: "up", lever: "fixed" },
+      angle: { min: -60, max: 60, def: 0, label: "Forearm angle from horizontal" }, dir: 1,
+      tip: "Drag the angle. The dumbbell's torque is largest when the forearm is horizontal, because that is when its horizontal distance from the elbow is longest.",
+      draw: function (t, e, k) {
+        var S = ST.sh, E = P(130, 141), W = pol(E, 46, t), C = pol(E, 46 * e.com[k] / e.added.d[k], t);
+        return ground() + standing() + ln(S, E) + ln(E, W, "mv") + ln(P(135, 102), pol(E, 9, t), "ms") + comC(C) + plate(W) + pivotC(E);
+      }
+    },
+    {
+      id: "hammer", region: "Arms", name: "Hammer curl", joint: "Elbow", seg: "Forearm + hand", segShort: "arm", pct: 0.022, com: [18, 16],
+      added: { label: "Dumbbell (lb)", name: "Dumbbell", short: "dumbbell", def: 10, d: [33, 30] },
+      muscle: { name: "Brachioradialis", short: "brachioradialis", antag: "Triceps", d: [6, 5.5], side: 1, pull: "up", lever: "fixed" },
+      angle: { min: -60, max: 60, def: 0, label: "Forearm angle from horizontal" }, dir: 1,
+      tip: "Compare this to the biceps curl. The brachioradialis attaches farther from the elbow than the biceps, so it has a longer lever arm.",
+      draw: function (t, e, k) {
+        var S = ST.sh, E = P(130, 141), W = pol(E, 46, t), C = pol(E, 46 * e.com[k] / e.added.d[k], t);
+        return ground() + standing() + ln(S, E) + ln(E, W, "mv") + ln(P(133, 124), pol(E, 30, t), "ms") + comC(C) + bar(W, t + 90) + pivotC(E);
+      }
+    },
+    {
+      id: "triceps", region: "Arms", name: "Overhead triceps extension", joint: "Elbow", seg: "Forearm + hand", segShort: "arm", pct: 0.022, com: [18, 16],
+      added: { label: "Dumbbell (lb)", name: "Dumbbell", short: "dumbbell", def: 10, d: [33, 30] },
+      muscle: { name: "Triceps", short: "triceps", antag: "Biceps", d: [2, 2], side: -1, pull: "down", lever: "fixed" },
+      angle: { min: -60, max: 30, def: 0, label: "Forearm angle from horizontal" }, dir: -1,
+      tip: "The triceps pulls on the point of the elbow (the olecranon), on the other side of the joint from the dumbbell. The fulcrum is in the middle, like a seesaw.",
+      draw: function (t, e, k) {
+        var E = P(120, 51), a = 180 - t, W = pol(E, 46, a), C = pol(E, 46 * e.com[k] / e.added.d[k], a), O = pol(E, 6, a + 180);
+        return ground() + standing(true) + ln(P(130, 96), P(138, 86)) + headC(P(143, 73)) + ln(P(128, 96), E) + ln(E, W, "mv") +
+          ln(P(124, 93), O, "ms") + comC(C) + plate(W) + pivotC(E);
+      }
+    },
+    {
+      id: "wrist", region: "Arms", name: "Wrist curl", joint: "Wrist", seg: "Hand", segShort: "hand", pct: 0.006, com: [6, 5.5],
+      added: { label: "Dumbbell (lb)", name: "Dumbbell", short: "dumbbell", def: 10, d: [8, 7] },
+      muscle: { name: "Wrist flexors", short: "flexors", antag: "Wrist extensors", d: [1.5, 1.5], side: 1, pull: "up", lever: "fixed" },
+      angle: { min: -60, max: 60, def: 0, label: "Hand angle from horizontal" }, dir: 1,
+      tip: "The wrist flexors attach very close to the joint, so even a light dumbbell takes a large muscle force. The fingers wrap around the handle, so the hand's center of mass sits in the palm, a little closer to the wrist than the dumbbell.",
+      draw: function (t, e, k) {
+        var hip = P(115, 217), K = P(170, 217), A = P(170, 272), S = P(140, 158), E = P(150, 203), W = P(190, 203);
+        var hand = pol(W, 19, t), D = pol(W, 16, t), C = pol(W, 16 * e.com[k] / e.added.d[k], t);
+        return ground() + '<rect x="52" y="222" width="82" height="58" rx="4" class="mach"/>' +
+          ln(P(112, 217), P(166, 214), "bd back") + ln(hip, K) + ln(K, A) + ln(A, P(186, 280)) + ln(hip, S) + ln(S, pol(S, 10, 67)) + headC(pol(S, 23, 67)) +
+          ln(S, E) + ln(E, W) + ln(W, hand, "mv") + ln(P(156, 198), pol(W, 5, t + 30), "ms") + plate(D) + comC(C) + pivotC(W);
+      }
+    },
+    {
+      id: "front", region: "Shoulders", name: "Front raise", joint: "Shoulder", seg: "Whole arm", segShort: "arm", pct: 0.05, com: [31, 29],
+      added: { label: "Dumbbell (lb)", name: "Dumbbell", short: "dumbbell", def: 5, d: [70, 64] },
+      muscle: { name: "Front deltoid", short: "deltoid", antag: "Latissimus dorsi", d: [3, 2.5], side: 1, pull: "up", lever: "fixed" },
+      angle: { min: -60, max: 20, def: 0, label: "Arm angle from horizontal" }, dir: 1,
+      tip: "The whole arm is a long lever, so even a light dumbbell takes a large deltoid force. Lower the arm and watch the horizontal distances shrink.",
+      draw: function (t, e, k) {
+        var S = ST.sh, H = pol(S, 88, t), C = pol(S, 88 * e.com[k] / e.added.d[k], t);
+        return ground() + standing() + ln(S, H, "mv") + ln(P(137, 88), pol(S, 16, t), "ms") + comC(C) + plate(H) + pivotC(S);
+      }
+    },
+    {
+      id: "lateral", region: "Shoulders", name: "Lateral raise", joint: "Shoulder", seg: "Whole arm", segShort: "arm", pct: 0.05, com: [31, 29],
+      added: { label: "Dumbbell, each hand (lb)", name: "Dumbbell", short: "dumbbell", def: 5, d: [70, 64] },
+      muscle: { name: "Side deltoid", short: "deltoid", antag: "Latissimus dorsi", d: [3, 2.5], side: 1, pull: "up", lever: "fixed" },
+      angle: { min: -60, max: 20, def: 0, label: "Arm angle from horizontal" }, dir: 1,
+      tip: "This one is seen from the front. Each arm is its own lever, so the diagram shows just the right arm.",
+      draw: function (t, e, k) {
+        var RS = P(174, 98), LS = P(126, 98), R = pol(RS, 88, t), L = pol(LS, 88, 180 - t), C = pol(RS, 88 * e.com[k] / e.added.d[k], t);
+        return ground() +
+          ln(P(141, 164), P(138, 220)) + ln(P(138, 220), P(137, 276)) + ln(P(137, 276), P(125, 280)) +
+          ln(P(159, 164), P(162, 220)) + ln(P(162, 220), P(163, 276)) + ln(P(163, 276), P(175, 280)) +
+          ln(P(141, 164), P(159, 164)) + ln(P(150, 164), P(150, 98)) + ln(LS, RS) + ln(P(150, 98), P(150, 86)) + headC(P(150, 72)) +
+          ln(LS, L) + plate(L) + ln(RS, R, "mv") + ln(P(160, 90), pol(RS, 16, t), "ms") + comC(C) + plate(R) + pivotC(RS);
+      }
+    },
+    {
+      id: "legext", region: "Legs", name: "Leg extension", joint: "Knee", seg: "Shank + foot", segShort: "leg", pct: 0.061, com: [26, 24],
+      added: { label: "Machine pad (lb)", name: "Machine pad", short: "pad", def: 20, d: [43, 40] },
+      muscle: { name: "Quadriceps", short: "quads", antag: "Hamstrings", d: [4.5, 4], side: 1, pull: "up", lever: "fixed" },
+      angle: { min: -60, max: 0, def: 0, label: "Shin angle from horizontal" }, dir: 1,
+      tip: "The quadriceps pull through the patellar tendon just below the knee. The leg is hardest to hold up when it is straight out.",
+      draw: function (t, e, k) {
+        var H = P(100, 196), K = P(155, 196), A = pol(K, 55, t), pad = pol(pol(K, 47, t), 8, t + 90), C = pol(K, 47 * e.com[k] / e.added.d[k], t);
+        var S = pol(H, 70, 100), E = pol(S, 44, -75), hand = pol(E, 30, -25);
+        return ground() + '<rect x="66" y="202" width="96" height="10" rx="3" class="mach"/><rect x="112" y="212" width="8" height="70" class="mach"/><rect x="58" y="112" width="8" height="92" rx="3" class="mach"/>' +
+          ln(H, S) + ln(S, pol(S, 10, 100)) + headC(pol(S, 23, 100)) + ln(S, E) + ln(E, hand) +
+          ln(H, K) + ln(K, A, "mv") + ln(A, pol(A, 15, t + 90)) + ln(P(104, 190), pol(K, 9, t), "ms") + comC(C) + plate(pad) + pivotC(K);
+      }
+    },
+    {
+      id: "hamcurl", region: "Legs", name: "Standing hamstring curl", joint: "Knee", seg: "Shank + foot", segShort: "leg", pct: 0.061, com: [26, 24],
+      added: { label: "Ankle weight (lb)", name: "Ankle weight", short: "ankle weight", def: 5, d: [43, 40] },
+      muscle: { name: "Hamstrings", short: "hamstrings", antag: "Quadriceps", d: [3, 2.5], side: 1, pull: "up", lever: "fixed" },
+      angle: { min: -60, max: 0, def: 0, label: "Shin angle from horizontal" }, dir: -1,
+      tip: "With the thigh vertical, the shin is horizontal at the top of the curl. That is where the torque from the ankle weight is largest.",
+      draw: function (t, e, k) {
+        var hip = ST.hip, K = P(131, 220), a = 180 - t, A = pol(K, 55, a), W = pol(K, 47, a), C = pol(K, 47 * e.com[k] / e.added.d[k], a);
+        var S = ST.sh, E = pol(S, 44, -25), hand = pol(E, 40, 5);
+        return ground() + '<rect x="208" y="106" width="7" height="176" rx="2" class="mach"/>' +
+          ln(P(128, 164), P(128, 220)) + ln(P(128, 220), P(129, 276)) + ln(P(129, 276), P(148, 281)) +
+          ln(hip, S) + ln(S, P(132, 86)) + headC(ST.head) + ln(S, E) + ln(E, hand) +
+          ln(hip, K) + ln(K, A, "mv") + ln(A, pol(A, 15, a + 90)) + ln(P(124, 172), pol(K, 9, a), "ms") + comC(C) + plate(W) + pivotC(K);
+      }
+    },
+    {
+      id: "calf", region: "Legs", name: "Calf raise", joint: "Ankle", pivotName: "Ball of foot", seg: "Foot", segShort: "body",
+      loads: [{ name: "Body + dumbbells (per foot)", short: "body", kind: "s", w: function (bw, a) { return (bw + a) / 2; }, d: [13, 12] }],
+      added: { label: "Dumbbells, total (lb)", name: "Dumbbells", short: "dumbbells", def: 20, d: null },
+      muscle: { name: "Calf (Achilles tendon)", short: "calf", antag: "Tibialis anterior", d: [18, 16.5], side: 1, pull: "up", lever: "cos" },
+      jointName: "Floor force", jointShort: "floor",
+      angle: { min: 5, max: 40, def: 20, label: "Heel lift angle" }, dir: -1,
+      tip: "The fulcrum is the ball of the foot, not the ankle. Your body weight pushes down at the ankle, between the fulcrum and the Achilles tendon. Each foot holds half of your weight.",
+      draw: function (t, e, k) {
+        var B = P(158, 281), H = pol(B, 26, 180 - t), A = pol(B, 19, 180 - t), Kn = P(A.x, A.y - 55), Hp = P(A.x, A.y - 111), S = P(A.x, A.y - 181);
+        var El = P(S.x + 2, S.y + 45), Hd = P(S.x + 3, S.y + 85);
+        return ground() + ln(B, P(167, 281)) + ln(A, Kn) + ln(Kn, Hp) + ln(Hp, S) + ln(S, P(S.x + 2, S.y - 10)) + headC(P(S.x + 3, S.y - 23)) +
+          ln(S, El) + ln(El, Hd) + plate(Hd) + ln(B, H, "mv") + ln(P(A.x - 5, A.y - 48), H, "ms") + comC(A) + pivotC(B);
+      }
+    },
+    {
+      id: "rdl", region: "Hips", name: "Romanian deadlift", joint: "Hip", seg: "Upper body", segShort: "upper body", pct: 0.678, com: [32, 29],
+      added: { label: "Dumbbells, total (lb)", name: "Dumbbells", short: "dumbbells", def: 20, d: [51, 47] },
+      muscle: { name: "Glutes + hamstrings", short: "glutes", antag: "Hip flexors", d: [6, 5.5], side: -1, pull: "down", lever: "fixed" },
+      angle: { min: 20, max: 60, def: 30, label: "Torso angle from horizontal" }, dir: 1,
+      tip: "The glutes and hamstrings pull behind the hip while your upper body tips forward in front of it. Bending farther forward moves the weight farther from the hip, so the torque grows.",
+      draw: function (t, e, k) {
+        var Hp = P(115, 164), S = pol(Hp, 70, t), El = P(S.x + 1, S.y + 44), Hd = P(S.x + 1, S.y + 84), C = pol(Hp, 70 * e.com[k] / e.added.d[k], t);
+        return ground() + ln(P(112, 164), P(118, 220), "bd back") + ln(P(118, 220), P(114, 276), "bd back") + ln(P(114, 276), P(132, 281), "bd back") +
+          ln(Hp, P(122, 220)) + ln(P(122, 220), P(117, 276)) + ln(P(117, 276), P(135, 281)) +
+          ln(Hp, S, "mv") + ln(S, pol(S, 10, t)) + headC(pol(S, 23, t)) + ln(S, El) + ln(El, Hd) + plate(Hd) +
+          ln(pol(Hp, 10, t + 160), P(111, 188), "ms") + comC(C) + pivotC(Hp);
+      }
+    }
+  ];
+
+  /* ---------- state ---------- */
+  var state = { ex: EX[0], angle: 0, k: 0, bw: 150, add: 10, show: false };
+  var $ = function (id) { return document.getElementById(id); };
+
+  function compute(angleDeg) {
+    var ex = state.ex, k = state.k, r = (angleDeg == null ? state.angle : angleDeg) * D2R, c = Math.cos(r);
+    var loads;
+    if (ex.loads) {
+      loads = ex.loads.map(function (l) { return { name: l.name, short: l.short, kind: l.kind, w: l.w(state.bw, state.add), d: l.d[k] }; });
+    } else {
+      loads = [{ name: ex.seg, short: ex.segShort, kind: "s", w: state.bw * ex.pct, d: ex.com[k] }];
+      if (state.add > 0) loads.push({ name: ex.added.name, short: ex.added.short, kind: "a", w: state.add, d: ex.added.d[k] });
+    }
+    loads.forEach(function (l) { l.x = l.d * c; l.t = l.w * l.x; });
+    var dm = ex.muscle.d[k];
+    var lever = ex.muscle.lever === "fixed" ? dm : dm * c;
+    var T = loads.reduce(function (s, l) { return s + l.t; }, 0);
+    var W = loads.reduce(function (s, l) { return s + l.w; }, 0);
+    var M = T / lever;
+    var sgn = ex.muscle.pull === "up" ? 1 : -1;
+    var J = W - sgn * M;
+    var cls = ex.muscle.side < 0 ? 1 : (dm > Math.max.apply(null, loads.map(function (l) { return l.d; })) ? 2 : 3);
+    return { r: r, c: c, loads: loads, lever: lever, T: T, W: W, M: M, J: J, cls: cls, dm: dm };
+  }
+
+  /* ---------- lever diagram ---------- */
+  function arrow(x1, y1, x2, y2, cls) {
+    var ang = Math.atan2(y2 - y1, x2 - x1), hl = 11, hw = 6.5;
+    var bx = x2 - hl * Math.cos(ang), by = y2 - hl * Math.sin(ang);
+    var p1x = bx + hw * Math.sin(ang), p1y = by - hw * Math.cos(ang), p2x = bx - hw * Math.sin(ang), p2y = by + hw * Math.cos(ang);
+    return '<g class="' + cls + '"><line x1="' + f(x1) + '" y1="' + f(y1) + '" x2="' + f(bx) + '" y2="' + f(by) + '" class="shaft"/>' +
+      '<polygon points="' + f(x2) + "," + f(y2) + " " + f(p1x) + "," + f(p1y) + " " + f(p2x) + "," + f(p2y) + '" class="head"/></g>';
+  }
+  function label2(x, y, anchor, name, val, tcls) {
+    return '<text x="' + f(x) + '" y="' + f(y + 7) + '" text-anchor="' + anchor + '" class="lbl ' + tcls + '">' + esc(name) + "</text>";
+  }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+
+  // One scale per exercise, so the beam keeps its size while the angle changes.
+  function scaleFor(ex) {
+    var k = state.k, dm = ex.muscle.d[k];
+    var ds = ex.loads ? ex.loads.map(function (l) { return l.d[k]; }) : [ex.com[k], ex.added.d[k]];
+    var amax = Math.max.apply(null, ds.concat([ex.muscle.side > 0 ? dm : 0]));
+    var amin = Math.min(0, ex.muscle.side < 0 ? -dm : 0);
+    var span = (amax - amin) || 1;
+    var maxSin = Math.max(Math.abs(Math.sin(ex.angle.min * D2R)), Math.abs(Math.sin(ex.angle.max * D2R)), 0.05);
+    return 300 / span; // every beam is drawn the same length on screen
+  }
+
+  function geom(ex, R, s, dimY0) {
+    var dir = ex.dir, c = R.c, sn = Math.sin(R.r);
+    var mAlong = ex.muscle.side * (ex.muscle.lever === "fixed" ? R.dm / Math.max(c, 0.15) : R.dm);
+    var alongs = [0, mAlong].concat(R.loads.map(function (l) { return l.d; }));
+    var amin = Math.min.apply(null, alongs), amax = Math.max.apply(null, alongs);
+    function rel(a) { return { x: dir * a * s * c, y: -a * s * sn }; }
+    var mp = rel(mAlong), enlarged = false;
+    if (Math.abs(mp.x) < 20) { var g = 20 / Math.max(Math.abs(mp.x), 0.001); mp = { x: mp.x * g, y: mp.y * g }; enlarged = true; }
+    var e1 = rel(amin), e2 = rel(amax);
+    var beamA = (Math.abs(mp.x) > Math.abs(e1.x) && Math.sign(mp.x) === Math.sign(e1.x)) ? mp : e1;
+    var beamB = (Math.abs(mp.x) > Math.abs(e2.x) && Math.sign(mp.x) === Math.sign(e2.x)) ? mp : e2;
+
+    var boxes = [];
+    function addBox(x1, y1, x2, y2) { boxes.push([Math.min(x1, x2), Math.min(y1, y2), Math.max(x1, x2), Math.max(y1, y2)]); }
+    function textBox(x, y, anchor, n1, n2) {
+      var w = n1.length * 6.6;
+      var x1 = anchor === "start" ? x : anchor === "end" ? x - w : x - w / 2;
+      addBox(x1, y - 12, x1 + w, y + 19);
+    }
+    addBox(beamA.x, beamA.y, beamB.x, beamB.y);
+
+    // Every arrow keeps one length, and every label keeps one spot relative to its arrow (or to the pivot),
+    // so nothing jumps while the slider moves.
+    var LOAD_LEN = 100, MUSCLE_LEN = 80, JOINT_LEN = 40;
+    var sorted = R.loads.map(function (l) { return { l: l, p: rel(l.d) }; }).sort(function (a, b) { return Math.abs(a.p.x) - Math.abs(b.p.x); });
+    var up = ex.muscle.pull === "up", mtip = up ? mp.y - MUSCLE_LEN : mp.y + MUSCLE_LEN;
+    var jName = ex.jointName || (ex.joint + " force"), jUp = R.J >= 0;
+    var jTop = jUp ? -JOINT_LEN : -JOINT_LEN - 4;
+    function side(sg) { return sg > 0 ? "start" : "end"; }
+    function txt(x, y, an, name, cls) {
+      var w = name.length * 8.4, x1 = an === "start" ? x : an === "end" ? x - w : x - w / 2;
+      addBox(x1, y - 12, x1 + w, y + 4);
+      return '<text x="' + f(x) + '" y="' + f(y) + '" text-anchor="' + an + '" class="lbl ' + cls + '">' + esc(name) + "</text>";
+    }
+
+    // muscle
+    var mSvg = arrow(mp.x, mp.y, mp.x, mtip, "ar-m");
+    addBox(mp.x, mp.y, mp.x, mtip);
+    if (R.cls === 3) {
+      // Label parked on the open side of the pivot, with a thin leader to the arrow tip.
+      var lx = -dir * 14, ly = -96;
+      mSvg += '<line x1="' + f(-dir * 8) + '" y1="' + f(ly + 4) + '" x2="' + f(mp.x) + '" y2="' + f(mtip) + '" class="leader"/>';
+      mSvg += txt(lx, ly, side(-dir), ex.muscle.name, "t-m");
+    } else {
+      var o = Math.sign(mp.x) || dir;
+      mSvg += txt(mp.x + o * 8, up ? mtip + 4 : mtip, side(o), ex.muscle.name, "t-m");
+    }
+
+    // joint force
+    var jSvg = jUp ? arrow(0, 0, 0, jTop, "ar-j") : arrow(0, jTop, 0, -3, "ar-j");
+    addBox(0, jTop, 0, 0);
+    if (R.cls === 1 && ex.angle.min < 0) jSvg += txt(0, jTop - 10, "middle", jName, "t-j");
+    else jSvg += txt(-dir * 10, jTop + 14, side(-dir), jName, "t-j");
+
+    // loads (down): label centered just under each arrowhead
+    var loadSvg = "";
+    sorted.forEach(function (o) {
+      var tip = o.p.y + LOAD_LEN, cls = o.l.kind === "a" ? "a" : "s";
+      loadSvg += arrow(o.p.x, o.p.y, o.p.x, tip, "ar-" + cls);
+      addBox(o.p.x, o.p.y, o.p.x, tip);
+      loadSvg += txt(o.p.x, tip + 17, "middle", o.l.name, "t-" + cls);
+    });
+
+    var fSvg = '<polygon points="0,3 -10,19 10,19" class="fulcrum"/>';
+    addBox(-10, 0, 10, 19);
+
+    // horizontal distances, at a fixed height so they don't jump
+    var dimSvg = "";
+    if (dimY0 != null) {
+      var dims = [{ x: mp.x, txt: "d\u22a5 " + ex.muscle.short, cls: "t-m" }].concat(
+        sorted.map(function (o) { return { x: o.p.x, txt: "d\u22a5 " + o.l.short, cls: o.l.kind === "a" ? "t-a" : "t-s" }; })
+      );
+      dims.forEach(function (d, i) {
+        var y = dimY0 + i * 26, x2 = d.x;
+        dimSvg += '<line x1="0" y1="' + f(y) + '" x2="' + f(x2) + '" y2="' + f(y) + '" class="dim"/>' +
+          '<line x1="0" y1="' + f(y - 5) + '" x2="0" y2="' + f(y + 5) + '" class="dim"/>' +
+          '<line x1="' + f(x2) + '" y1="' + f(y - 5) + '" x2="' + f(x2) + '" y2="' + f(y + 5) + '" class="dim"/>';
+        var w = d.txt.length * 8.2, sg = Math.sign(x2) || dir, tx = x2 + sg * 8;
+        dimSvg += '<text x="' + f(tx) + '" y="' + f(y + 4) + '" text-anchor="' + (sg > 0 ? "start" : "end") + '" class="dimtxt ' + d.cls + '">' + esc(d.txt) + "</text>";
+        addBox(tx, y, tx + sg * w, y);
+        addBox(0, y + 8, x2, y + 8);
+      });
+    }
+
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    boxes.forEach(function (b) { minX = Math.min(minX, b[0]); minY = Math.min(minY, b[1]); maxX = Math.max(maxX, b[2]); maxY = Math.max(maxY, b[3]); });
+    var ref = '<line x1="' + f(Math.min(beamA.x, beamB.x, 0) - 6) + '" y1="0" x2="' + f(Math.max(beamA.x, beamB.x, 0) + 6) + '" y2="0" class="ref"/>';
+    var beam = '<line x1="' + f(beamA.x) + '" y1="' + f(beamA.y) + '" x2="' + f(beamB.x) + '" y2="' + f(beamB.y) + '" class="beam"/>';
+    return { inner: ref + dimSvg + beam + fSvg + loadSvg + mSvg + jSvg, minX: minX, minY: minY, maxX: maxX, maxY: maxY, enlarged: enlarged };
+  }
+
+  // The frame is the union over every angle the slider allows, so it never changes while dragging.
+  var layoutCache = { key: null };
+  function layoutFor(ex) {
+    var key = [ex.id, state.k, state.bw, state.add, state.show].join("|");
+    if (layoutCache.key === key) return layoutCache;
+    var s = scaleFor(ex), angles = [];
+    for (var a = ex.angle.min; a < ex.angle.max; a += 2) angles.push(a);
+    angles.push(ex.angle.max);
+    function union(dimY0) {
+      var u = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+      angles.forEach(function (ang) {
+        var g = geom(ex, compute(ang), s, dimY0);
+        u.minX = Math.min(u.minX, g.minX); u.minY = Math.min(u.minY, g.minY);
+        u.maxX = Math.max(u.maxX, g.maxX); u.maxY = Math.max(u.maxY, g.maxY);
+      });
+      return u;
+    }
+    var dimY0 = union(null).maxY + 26;
+    var u = union(dimY0);
+    layoutCache = { key: key, s: s, dimY0: dimY0, minX: u.minX, minY: u.minY, maxX: u.maxX, maxY: u.maxY };
+    return layoutCache;
+  }
+
+  function drawLever(ex, R) {
+    var L = layoutFor(ex), g = geom(ex, R, L.s, L.dimY0);
+    // One frame size for every exercise, so the diagrams all display at the same size.
+    var W = FRAME.W, H = FRAME.H;
+    var z = Math.min(1, (W - 24) / (L.maxX - L.minX), (H - 24) / (L.maxY - L.minY));
+    var px = W / 2 - z * (L.minX + L.maxX) / 2, py = H / 2 - z * (L.minY + L.maxY) / 2;
+    var el = $("lever");
+    el.setAttribute("viewBox", "0 0 " + W + " " + H);
+    el.innerHTML = '<g transform="translate(' + f(px) + " " + f(py) + ") scale(" + z.toFixed(3) + ')">' + g.inner + "</g>";
+    el.setAttribute("aria-label", "Lever diagram for " + ex.name + ": class " + R.cls + " lever, fulcrum at the " + (ex.pivotName || ex.joint).toLowerCase() + ".");
+    var note = $("leverNote");
+    if (g.enlarged) {
+      if (!note) { note = document.createElement("span"); note.id = "leverNote"; note.className = "note"; $("leverLegend").appendChild(note); }
+      note.textContent = "The muscle's distance is drawn larger than scale so you can see it.";
+    } else if (note) { note.remove(); }
+  }
+
+  /* ---------- text panels ---------- */
+  var CLASS_TXT = {
+    1: "The fulcrum is between the effort and the load, like a seesaw.",
+    2: "The load is between the fulcrum and the effort, like a wheelbarrow.",
+    3: "The effort is between the fulcrum and the load, like tweezers."
+  };
+  function renderFacts(ex, R) {
+    var rows = [
+      ["Pivot", ex.pivotName ? ex.pivotName + " (fulcrum)" : ex.joint + " joint"],
+      ["Moving part", ex.id === "calf" ? "Foot" : ex.seg],
+      ["Agonist", ex.muscle.name + " (pulls " + ex.muscle.pull + ")"],
+      ["Antagonist", ex.muscle.antag],
+      ["Lever class", "Class " + R.cls + ". " + CLASS_TXT[R.cls]]
+    ];
+    $("facts").innerHTML = rows.map(function (r) { return "<dt>" + r[0] + "</dt><dd" + (r[0] === "Lever class" ? ' class="wide"' : "") + ">" + esc(r[1]) + "</dd>"; }).join("");
+    $("tip").textContent = ex.tip;
+  }
+  function renderTable(ex, R) {
+    var q = state.show;
+    var colorVar = { m: "var(--muscle)", s: "var(--seg)", a: "var(--added)", j: "var(--joint)" };
+    var html = '<thead><tr><th>Force</th><th>Direction</th><th class="n">Force (lb)</th><th class="n">Horizontal distance (cm)</th><th class="n">Torque (lb&middot;cm)</th></tr></thead><tbody>';
+    function row(c, name, dirTxt, w, d, t) {
+      return '<tr><td><span class="dot" style="background:' + colorVar[c] + '"></span>' + esc(name) + "</td><td>" + dirTxt + '</td><td class="n">' + w + '</td><td class="n">' + d + '</td><td class="n">' + t + "</td></tr>";
+    }
+    html += row("m", ex.muscle.name + " (agonist)", ex.muscle.pull, q ? r1(R.M) : "?", r1(R.lever), q ? r1(R.M * R.lever) : "?");
+    R.loads.forEach(function (l) { html += row(l.kind, l.name, "down", r1(l.w), r1(l.x), r1(l.t)); });
+    html += row("j", ex.jointName || ex.joint + " joint force", q ? (R.J >= 0 ? "up" : "down") : "?", q ? r1(Math.abs(R.J)) : "?", "0", "0");
+    $("forces").innerHTML = html + "</tbody>";
+  }
+  function renderAnswers(ex, R) {
+    var box = $("ansBody");
+    if (!state.show) {
+      box.innerHTML = '<p class="hidden-msg">Answers are hidden. Work out the muscle force and joint force from the diagram, then press <strong>Show answers</strong> to check.</p>';
+      return;
+    }
+    var m = ex.muscle.short, L = R.loads, lv = r1(R.lever) + " cm";
+    var t1 = [];
+    t1.push("<div><strong>Torque rotating one way = torque rotating the other way</strong></div>");
+    t1.push("<div>Torque of " + esc(m) + " = " + L.map(function (l) { return "torque of " + esc(l.short); }).join(" + ") + "</div>");
+    t1.push("<div>F(" + esc(m) + ") &times; " + lv + " = " + L.map(function (l) { return r1(l.w) + " lb &times; " + r1(l.x) + " cm"; }).join(" + ") + "</div>");
+    if (L.length > 1) t1.push("<div>F(" + esc(m) + ") &times; " + lv + " = " + L.map(function (l) { return r1(l.t) + " lb&middot;cm"; }).join(" + ") + " = " + r1(R.T) + " lb&middot;cm</div>");
+    t1.push('<div class="res">F(' + esc(m) + ") = " + r1(R.T) + " lb&middot;cm &divide; " + lv + " &asymp; " + r1(R.M) + " lb (" + ex.muscle.pull + ")</div>");
+
+    var jn = ex.jointShort || "joint", down = [], upA = [];
+    L.forEach(function (l) { down.push({ s: "F(" + l.short + ")", v: r1(l.w) + " lb", n: l.w }); });
+    var mt = { s: "F(" + m + ")", v: r1(R.M) + " lb", n: R.M };
+    (ex.muscle.pull === "up" ? upA : down).push(mt);
+    var jt = { s: "F(" + jn + ")", v: "F(" + jn + ")", n: null };
+    var jDown = R.J < 0;
+    (jDown ? down : upA).unshift(jt);
+    function side(arr, key) { return arr.map(function (x) { return esc(x[key]); }).join(" + "); }
+    var otherDown = down.filter(function (x) { return x !== jt; }).reduce(function (s, x) { return s + x.n; }, 0);
+    var otherUp = upA.filter(function (x) { return x !== jt; }).reduce(function (s, x) { return s + x.n; }, 0);
+    var solve = jDown
+      ? "F(" + jn + ") = " + r1(otherUp) + " lb &minus; " + r1(otherDown) + " lb ="
+      : (otherUp > 0 ? "F(" + jn + ") = " + r1(otherDown) + " lb &minus; " + r1(otherUp) + " lb =" : "F(" + jn + ") = " + side(down, "v") + " =");
+    var t2 = [];
+    t2.push("<div><strong>Forces down = forces up</strong></div>");
+    t2.push("<div>" + side(down, "s") + " = " + side(upA, "s") + "</div>");
+    t2.push("<div>" + side(down, "v") + " = " + side(upA, "v") + "</div>");
+    t2.push('<div class="res">' + solve + ' <span class="circle">' + r1(Math.abs(R.J)) + " lb " + (jDown ? "down" : "up") + "</span></div>");
+
+    var ref = state.add > 0 && !ex.loads ? { w: state.add, n: "the " + ex.added.short } : { w: L[0].w, n: L[0].name.toLowerCase() };
+    var ratio = '<p class="ratio">The ' + esc(ex.muscle.name.toLowerCase()) + " pulls about <strong>" + r1(R.M / ref.w) + "&times;</strong> as hard as " + esc(ref.n) + " weighs.</p>";
+
+    box.innerHTML = '<div class="ans-grid"><div><h3>Torque equilibrium</h3><div class="eq">' + t1.join("") + '</div></div><div><h3>Force equilibrium</h3><div class="eq">' + t2.join("") + "</div></div></div>" + ratio;
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    var ex = state.ex, R = compute();
+    $("figure").innerHTML = ex.draw(state.angle, ex, state.k);
+    $("figure").setAttribute("aria-label", "Stick figure doing a " + ex.name.toLowerCase() + " at " + state.angle + " degrees.");
+    $("exName").textContent = ex.name;
+    $("classBadge").textContent = "Class " + R.cls + " lever";
+    $("angleOut").textContent = state.angle + "°";
+    drawLever(ex, R);
+    renderFacts(ex, R);
+  }
+
+  function selectEx(ex, keepUrl) {
+    state.ex = ex;
+    state.angle = ex.angle.def;
+    state.add = ex.added.def;
+    var a = $("angle");
+    a.min = ex.angle.min; a.max = ex.angle.max; a.value = ex.angle.def;
+    $("angleLabel").textContent = ex.angle.label;
+    document.querySelectorAll(".chip").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.id === ex.id ? "true" : "false"); });
+    if (!keepUrl) { try { history.replaceState(null, "", "#" + ex.id); } catch (e) {} }
+    render();
+  }
+
+  // build picker
+  var regions = [];
+  EX.forEach(function (e) { if (regions.indexOf(e.region) < 0) regions.push(e.region); });
+  $("picker").innerHTML = regions.map(function (r) {
+    return '<div class="group"><span class="glabel">' + r + "</span>" + EX.filter(function (e) { return e.region === r; }).map(function (e) {
+      return '<button type="button" class="chip" data-id="' + e.id + '" aria-pressed="false">' + e.name + "</button>";
+    }).join("") + "</div>";
+  }).join("");
+  $("picker").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".chip"); if (!b) return;
+    selectEx(EX.filter(function (e) { return e.id === b.dataset.id; })[0]);
+  });
+
+  $("angle").addEventListener("input", function () { state.angle = +this.value; render(); });
+  function stepAngle(d) {
+    var a = $("angle"), v = Math.max(+a.min, Math.min(+a.max, state.angle + d));
+    a.value = v; state.angle = v; render();
+  }
+  $("angleDown").addEventListener("click", function () { stepAngle(-5); });
+  $("angleUp").addEventListener("click", function () { stepAngle(5); });
+  var start = EX[0];
+  try { var h = (location.hash || "").slice(1); EX.forEach(function (e) { if (e.id === h) start = e; }); } catch (e) {}
+  // Measure every exercise once; the shared frame is just big enough for the largest one.
+  var FRAME = { W: 400, H: 400 };
+  (function () {
+    var keep = state.ex, w = 0, h = 0;
+    EX.forEach(function (e) {
+      state.ex = e; state.add = e.added.def;
+      var L = layoutFor(e);
+      w = Math.max(w, L.maxX - L.minX); h = Math.max(h, L.maxY - L.minY);
+    });
+    state.ex = keep; layoutCache = { key: null };
+    FRAME = { W: Math.ceil(w + 24), H: Math.ceil(h + 24) };
+  })();
+  selectEx(start, true);
+})();
+</script>
+</body>
+</html>
